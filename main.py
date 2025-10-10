@@ -161,9 +161,26 @@ async def get_recent_sessions(limit: int = Query(10, ge=1, le=50)):
         logger.error(f"Error getting recent sessions: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@app.get("/health", dependencies=[Depends(verify_token)])
+@app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint (no authentication required for Railway)"""
+    try:
+        # Simple health check - just return OK if the app is running
+        return JSONResponse(content={
+            "status": "healthy",
+            "message": "CAGR API is running",
+            "version": "1.0.0"
+        })
+    except Exception as e:
+        logger.error(f"Error in health check: {e}")
+        return JSONResponse(
+            content={"status": "unhealthy", "error": str(e)},
+            status_code=500
+        )
+
+@app.get("/health/detailed", dependencies=[Depends(verify_token)])
+async def detailed_health_check():
+    """Detailed health check endpoint (requires authentication)"""
     try:
         # Check database connection
         db_ok = test_connection()
@@ -181,7 +198,7 @@ async def health_check():
             "data": freshness
         })
     except Exception as e:
-        logger.error(f"Error in health check: {e}")
+        logger.error(f"Error in detailed health check: {e}")
         return JSONResponse(
             content={"status": "unhealthy", "error": str(e)},
             status_code=500
