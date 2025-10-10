@@ -1,10 +1,10 @@
-# Python 3.13.1 compatible packages
+# Python 3.11 compatible packages for Railway deployment
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 sqlalchemy==2.0.23
 requests==2.31.0
 beautifulsoup4==4.12.2
-pandas==2.1.3
+pandas==2.0.3
 selenium==4.15.2
 webdriver-manager==4.0.1
 streamlit==1.28.1
