@@ -1,0 +1,21 @@
+{
+  "scraping": {
+    "frequency_hours": 6,
+    "retry_attempts": 3,
+    "retry_delay": 2,
+    "scroll_pixels": 500,
+    "row_type": "Avg"
+  },
+  "webdriver": {
+    "browser": "firefox",
+    "headless": true
+  },
+  "api": {
+    "auth_token": "CHANGE_THIS_TO_SECURE_TOKEN",
+    "host": "0.0.0.0",
+    "port": 8000
+  },
+  "database": {
+    "url": "sqlite:///cagr_data.db"
+  }
+}
