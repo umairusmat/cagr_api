@@ -1,0 +1,10 @@
+# Streamlit Data Server requirements
+streamlit==1.28.1
+requests==2.31.0
+pandas==2.0.3
+numpy==1.24.3
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+selenium==4.15.2
+webdriver-manager==4.0.1
+beautifulsoup4==4.12.2
