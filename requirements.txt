@@ -1,12 +1,7 @@
-# Python 3.11 compatible packages for Railway deployment
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-sqlalchemy==2.0.23
-requests==2.31.0
-beautifulsoup4==4.12.2
-pandas==2.0.3
-selenium==4.15.2
-webdriver-manager==4.0.1
+# Streamlit Cloud requirements - Optimized for deployment
+# Core dependencies only
+
 streamlit==1.28.1
-python-multipart==0.0.6
-pydantic==2.5.0
+requests==2.31.0
+pandas==2.0.3
+numpy==1.24.3
