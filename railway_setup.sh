@@ -1,15 +1,15 @@
 #!/bin/bash
 # Railway setup script for CAGR API
-# Installs Firefox-ESR and geckodriver for Linux environment
+# Installs Firefox and geckodriver for Linux environment
 
 echo "Setting up CAGR API for Railway deployment..."
 
 # Update package list
 apt-get update
 
-# Install Firefox-ESR
-echo "Installing Firefox-ESR..."
-apt-get install -y firefox-esr
+# Install Firefox
+echo "Installing Firefox..."
+apt-get install -y firefox
 
 # Install wget and unzip for geckodriver
 apt-get install -y wget unzip
@@ -43,5 +43,5 @@ mkdir -p /app/output
 mkdir -p /app/logs
 
 echo "Railway setup completed successfully!"
-echo "Firefox-ESR version: $(firefox-esr --version)"
+echo "Firefox version: $(firefox --version)"
 echo "Geckodriver version: $(geckodriver --version)"
