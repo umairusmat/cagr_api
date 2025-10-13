@@ -213,3 +213,52 @@ class DataService:
         except Exception as e:
             logger.error(f"Error searching tickers: {e}")
             return []
+    
+    def store_data_from_streamlit(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Store data uploaded from Streamlit app"""
+        try:
+            tickers_processed = 0
+            
+            with self.session_factory() as session:
+                # Get the data from the request
+                streamlit_data = data.get('data', {})
+                
+                for ticker, ticker_data in streamlit_data.items():
+                    try:
+                        # Delete existing data for this ticker
+                        session.query(CAGRData).filter(CAGRData.ticker == ticker.upper()).delete()
+                        
+                        # Get values from the ticker data
+                        values = ticker_data.get('values', {})
+                        
+                        # Insert new data
+                        for year, value in values.items():
+                            cagr_data = CAGRData(
+                                ticker=ticker.upper(),
+                                year=str(year),
+                                value=str(value) if value else None
+                            )
+                            session.add(cagr_data)
+                        
+                        tickers_processed += 1
+                        logger.info(f"Stored data for {ticker}: {len(values)} years")
+                        
+                    except Exception as e:
+                        logger.error(f"Error storing data for {ticker}: {e}")
+                        continue
+                
+                session.commit()
+                logger.info(f"Successfully stored data for {tickers_processed} tickers")
+                
+                return {
+                    "tickers_processed": tickers_processed,
+                    "status": "success"
+                }
+                
+        except Exception as e:
+            logger.error(f"Error storing data from Streamlit: {e}")
+            return {
+                "tickers_processed": 0,
+                "status": "error",
+                "error": str(e)
+            }
