@@ -1,20 +1,8 @@
 {
   "scraping": {
     "frequency_hours": 6,
-    "retry_attempts": 3,
-    "retry_delay": 2,
-    "scroll_pixels": 500,
-    "row_type": "Avg"
-  },
-  "webdriver": {
-    "browser": "chrome",
+    "enabled": true,
     "headless": true
-  },
-  "data": {
-    "output": {
-      "directory": "./output",
-      "analyst_cagr_csv": "analyst_cagr_data.csv"
-    }
   },
   "api": {
     "auth_token": "mysecretapitoken123",

@@ -1,0 +1,12 @@
+[phases.setup]
+nixPkgs = ["firefox-esr", "wget", "unzip", "libgtk-3-0", "libdbus-glib-1-2", "libxt6", "libxcomposite1", "libxdamage1", "libxrandr2", "libasound2", "libpangocairo-1.0-0", "libatk1.0-0", "libcairo-gobject2", "libgdk-pixbuf2.0-0"]
+
+[phases.install]
+cmds = [
+  "chmod +x railway_setup.sh",
+  "./railway_setup.sh",
+  "pip install -r requirements.txt"
+]
+
+[start]
+cmd = "python working_app.py"
