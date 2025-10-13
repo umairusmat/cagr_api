@@ -1,7 +1,5 @@
-# Streamlit Cloud requirements - Optimized for deployment
-# Core dependencies only
-
-streamlit==1.28.1
-requests==2.31.0
-pandas==2.0.3
-numpy==1.24.3
+# Minimal requirements for Python 3.13 compatibility
+streamlit>=1.28.0
+requests>=2.31.0
+pandas>=2.0.0
+numpy>=1.24.0

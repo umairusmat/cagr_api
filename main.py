@@ -18,7 +18,7 @@ config = load_config()
 AUTH_TOKEN = config.get('api', {}).get('auth_token', 'mysecretapitoken123')
 
 # Streamlit data server URL (this should be your Streamlit Cloud URL)
-STREAMLIT_DATA_SERVER_URL = "https://your-streamlit-app.streamlit.app"  # Update this with your actual Streamlit URL
+STREAMLIT_DATA_SERVER_URL = "https://cagr_api.streamlit.app"  # Update this with your actual Streamlit URL
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
