@@ -9,7 +9,7 @@ ENV PYTHONUNBUFFERED=1
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
-    firefox-esr \
+    firefox \
     wget \
     tar \
     libxml2-dev \
@@ -38,7 +38,7 @@ COPY . .
 RUN mkdir -p /app/input /app/output /app/logs
 
 # Set environment variables
-ENV FIREFOX_BINARY_PATH=/usr/bin/firefox-esr
+ENV FIREFOX_BINARY_PATH=/usr/bin/firefox
 ENV GECKODRIVER_PATH=/usr/local/bin/geckodriver
 
 # Expose port
