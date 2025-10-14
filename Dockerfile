@@ -16,6 +16,18 @@ RUN apt-get update && apt-get install -y \
     tar \
     libxml2-dev \
     libxslt1-dev \
+    libgtk-3-0 \
+    libdbus-glib-1-2 \
+    libxt6 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libasound2 \
+    libpangocairo-1.0-0 \
+    libatk1.0-0 \
+    libcairo-gobject2 \
+    libgdk-pixbuf2.0-0 \
+    xvfb \
     && rm -rf /var/lib/apt/lists/*
 
 # Install GeckoDriver
@@ -42,6 +54,7 @@ RUN mkdir -p /app/input /app/output /app/logs
 # Set environment variables
 ENV FIREFOX_BINARY_PATH=/usr/bin/firefox
 ENV GECKODRIVER_PATH=/usr/local/bin/geckodriver
+ENV DISPLAY=:99
 
 # Expose port
 EXPOSE 8080
