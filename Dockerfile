@@ -1,6 +1,8 @@
 # Use Ubuntu base image
 FROM ubuntu:22.04
 
+# Cache bust - force rebuild
+
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
