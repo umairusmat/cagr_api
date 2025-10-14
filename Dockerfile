@@ -17,12 +17,12 @@ RUN apt-get update && apt-get install -y \
     libxslt1-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Firefox-ESR from Mozilla repository
-RUN wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O- | apt-key add - && \
-    echo "deb https://packages.mozilla.org/apt/ubuntu jammy main" > /etc/apt/sources.list.d/mozilla.list && \
-    apt-get update && \
-    apt-get install -y firefox-esr && \
-    rm -rf /var/lib/apt/lists/*
+# Install Firefox-ESR directly from Mozilla
+RUN FIREFOX_VERSION="115.12.0esr" && \
+    wget -O /tmp/firefox-esr.tar.bz2 "https://download-installer.cdn.mozilla.net/pub/firefox/releases/${FIREFOX_VERSION}/linux-x86_64/en-US/firefox-${FIREFOX_VERSION}.tar.bz2" && \
+    tar -xjf /tmp/firefox-esr.tar.bz2 -C /opt/ && \
+    ln -s /opt/firefox/firefox /usr/bin/firefox-esr && \
+    rm /tmp/firefox-esr.tar.bz2
 
 # Install GeckoDriver
 RUN GECKODRIVER_VERSION="0.34.0" && \
