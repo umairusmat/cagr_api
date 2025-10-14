@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["firefox", "wget", "unzip", "gtk3", "dbus-glib", "libXt", "libXcomposite", "libXdamage", "libXrandr", "alsa-lib", "pango", "atk", "cairo", "gdk-pixbuf"]
+nixPkgs = ["firefox", "wget", "unzip"]
 
 [phases.install]
 cmds = [
