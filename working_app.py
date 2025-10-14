@@ -110,7 +110,8 @@ def main():
         # Get API configuration
         api_config = config.get('api', {})
         host = api_config.get('host', '0.0.0.0')
-        port = api_config.get('port', 8000)
+        # Use Railway's PORT environment variable if available
+        port = int(os.environ.get('PORT', api_config.get('port', 8000)))
         
         logger.info(f"Starting CAGR API on {host}:{port}")
         logger.info("Application is ready!")

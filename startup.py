@@ -1,95 +1,35 @@
 """
-Railway startup script with health check
-Starts simple health server first, then transitions to full app
+Railway startup script with proper port handling
 """
 
 import os
 import sys
-import time
-import subprocess
-import threading
 import logging
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import json
-from datetime import datetime
+from working_app import main
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-class HealthHandler(BaseHTTPRequestHandler):
-    """Health check handler"""
+def main_startup():
+    """Main startup function for Railway"""
+    logger.info("Starting CAGR Application for Railway...")
     
-    def do_GET(self):
-        """Handle GET requests"""
-        if self.path == '/health':
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            
-            response = {
-                "status": "healthy",
-                "message": "CAGR API is running",
-                "version": "2.0.0",
-                "timestamp": datetime.now().isoformat(),
-                "data": {
-                    "available": True,
-                    "total_tickers": 0,
-                    "last_scrape": None
-                }
-            }
-            
-            self.wfile.write(json.dumps(response).encode())
-            logger.info("Health check passed")
-        else:
-            self.send_response(404)
-            self.end_headers()
-            self.wfile.write(b'Not Found')
-    
-    def log_message(self, format, *args):
-        """Suppress default logging"""
-        pass
-
-def run_health_server():
-    """Run health server in background"""
-    port = int(os.environ.get('PORT', 8000))
-    
-    try:
-        server = HTTPServer(('0.0.0.0', port), HealthHandler)
-        logger.info(f"Health server starting on port {port}")
-        server.serve_forever()
-    except Exception as e:
-        logger.error(f"Health server error: {e}")
-
-def main():
-    """Main startup function"""
-    logger.info("Starting CAGR API with health check...")
-    
-    # Start health server in background
-    health_thread = threading.Thread(target=run_health_server, daemon=True)
-    health_thread.start()
-    
-    # Wait a moment for health server to start
-    time.sleep(2)
-    
-    # Check if we should start the full application
-    if os.environ.get('START_FULL_APP', 'true').lower() == 'true':
-        logger.info("Starting full CAGR application...")
-        try:
-            # Import and start the full application
-            from working_app import main as app_main
-            app_main()
-        except Exception as e:
-            logger.error(f"Error starting full app: {e}")
-            logger.info("Continuing with health server only...")
-            # Keep the health server running
-            while True:
-                time.sleep(1)
+    # Set Railway environment variables
+    if 'PORT' in os.environ:
+        logger.info(f"Railway PORT detected: {os.environ['PORT']}")
     else:
-        logger.info("Running in health-only mode...")
-        # Keep the health server running
-        while True:
-            time.sleep(1)
+        logger.info("No Railway PORT detected, using default 8000")
+    
+    # Start the main application
+    try:
+        main()
+    except Exception as e:
+        logger.error(f"Failed to start application: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    main_startup()
