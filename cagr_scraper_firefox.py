@@ -56,6 +56,18 @@ class CAGRScraperFirefox:
                 options.binary_location = firefox_binary
                 logger.info(f"Using Firefox at {firefox_binary} for Linux/Railway environment")
                 
+                # Additional Railway-specific options for stability
+                options.add_argument('--no-sandbox')
+                options.add_argument('--disable-dev-shm-usage')
+                options.add_argument('--disable-gpu')
+                options.add_argument('--disable-extensions')
+                options.add_argument('--disable-plugins')
+                options.add_argument('--disable-images')
+                options.add_argument('--disable-javascript')
+                options.add_argument('--disable-web-security')
+                options.add_argument('--allow-running-insecure-content')
+                options.add_argument('--disable-features=VizDisplayCompositor')
+                
                 # Try to use system geckodriver first
                 geckodriver_path = os.environ.get('GECKODRIVER_PATH')
                 if not geckodriver_path:
@@ -118,11 +130,15 @@ class CAGRScraperFirefox:
             logger.info(f"Scraping {ticker} from {url}")
             
             self.driver.get(url)
-            time.sleep(3)  # Let page load
+            time.sleep(5)  # Increased wait time for Railway
+            
+            # Log page title and URL for debugging
+            logger.info(f"Page loaded: {self.driver.title}")
+            logger.info(f"Current URL: {self.driver.current_url}")
             
             # Scroll down to ensure content loads
             self.driver.execute_script("window.scrollBy(0, 500);")
-            time.sleep(2)
+            time.sleep(3)
             
             # Click the CAGR button
             cagr_button = self._wait_for_element(
@@ -132,10 +148,22 @@ class CAGRScraperFirefox:
             )
             
             if cagr_button:
+                logger.info(f"CAGR button found for {ticker}, clicking...")
                 self.driver.execute_script("arguments[0].click();", cagr_button)
-                time.sleep(3)  # Wait for data to load
+                time.sleep(5)  # Increased wait time for data to load
+                logger.info(f"CAGR button clicked for {ticker}")
             else:
                 logger.warning(f"CAGR button not found for {ticker}")
+                # Log page source for debugging
+                try:
+                    page_source = self.driver.page_source
+                    logger.info(f"Page source length: {len(page_source)}")
+                    if "cagr" in page_source.lower():
+                        logger.info("CAGR text found in page source")
+                    else:
+                        logger.warning("CAGR text not found in page source")
+                except Exception as e:
+                    logger.error(f"Error checking page source: {e}")
                 return self._empty_result(ticker)
             
             # Find year headers
