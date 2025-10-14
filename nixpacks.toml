@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["firefox", "wget", "unzip", "gtk3", "dbus-glib", "libXt", "libXcomposite", "libXdamage", "libXrandr", "alsa-lib", "pango", "atk", "cairo", "gdk-pixbuf"]
+
+[phases.install]
+cmds = [
+  "chmod +x railway_setup.sh",
+  "./railway_setup.sh"
+]
+
+[start]
+cmd = "python3 startup.py"

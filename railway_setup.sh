@@ -50,7 +50,10 @@ mkdir -p /app/input
 mkdir -p /app/output
 mkdir -p /app/logs
 
-echo "Railway setup completed successfully!"
+# Verify installations
+echo "Verifying installations..."
 echo "Python version: $(python3 --version)"
-echo "Firefox version: $(firefox --version)"
-echo "Geckodriver version: $(geckodriver --version)"
+echo "Firefox version: $(firefox --version 2>/dev/null || echo 'Firefox not found')"
+echo "Geckodriver version: $(geckodriver --version 2>/dev/null || echo 'Geckodriver not found')"
+
+echo "Railway setup completed successfully!"
