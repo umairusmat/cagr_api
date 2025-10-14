@@ -51,10 +51,10 @@ class CAGRScraperFirefox:
             
             # Railway/Linux specific configuration
             if platform.system() == "Linux":
-                # Railway/Linux environment - use firefox
-                firefox_binary = os.environ.get('FIREFOX_BINARY_PATH', '/usr/bin/firefox')
+                # Railway/Linux environment - use firefox-esr (more stable)
+                firefox_binary = os.environ.get('FIREFOX_BINARY_PATH', '/usr/bin/firefox-esr')
                 options.binary_location = firefox_binary
-                logger.info(f"Using Firefox at {firefox_binary} for Linux/Railway environment")
+                logger.info(f"Using Firefox-ESR at {firefox_binary} for Linux/Railway environment")
                 
                 # Additional Railway-specific options for stability
                 options.add_argument('--no-sandbox')

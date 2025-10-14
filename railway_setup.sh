@@ -1,8 +1,6 @@
 #!/bin/bash
-# Railway setup script for CAGR API
-# Installs Firefox and geckodriver for Linux environment
-
-echo "Setting up CAGR API for Railway deployment..."
+# Railway setup script for CAGR API - Based on working Streamlit setup
+echo "🚀 Setting up CAGR API for Railway deployment..."
 
 # Update package list
 apt-get update
@@ -11,35 +9,35 @@ apt-get update
 echo "Installing Python and pip..."
 apt-get install -y python3 python3-pip
 
-# Install Firefox
-echo "Installing Firefox..."
-apt-get install -y firefox
+# Install Firefox-ESR (more stable on Linux)
+echo "Installing Firefox-ESR..."
+apt-get install -y firefox-esr
 
-# Install wget and unzip for geckodriver
-apt-get install -y wget unzip
+# Install wget, tar, and other dependencies
+echo "Installing system dependencies..."
+apt-get install -y wget tar libxml2-dev libxslt1-dev
 
-# Download and install geckodriver
-echo "Installing geckodriver..."
+# Install GeckoDriver manually (same as working Streamlit setup)
+echo "📦 Installing GeckoDriver for Firefox-ESR..."
 GECKODRIVER_VERSION="0.34.0"
-wget -O /tmp/geckodriver.tar.gz "https://github.com/mozilla/geckodriver/releases/download/v${GECKODRIVER_VERSION}/geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz"
-tar -xzf /tmp/geckodriver.tar.gz -C /tmp/
-mv /tmp/geckodriver /usr/local/bin/geckodriver
-chmod +x /usr/local/bin/geckodriver
+GECKODRIVER_URL="https://github.com/mozilla/geckodriver/releases/download/v${GECKODRIVER_VERSION}/geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz"
 
-# Install additional dependencies for Firefox
-apt-get install -y \
-    libgtk-3-0 \
-    libdbus-glib-1-2 \
-    libxt6 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    libasound2 \
-    libpangocairo-1.0-0 \
-    libatk1.0-0 \
-    libcairo-gobject2 \
-    libgtk-3-0 \
-    libgdk-pixbuf2.0-0
+# Create directory for GeckoDriver
+mkdir -p /usr/local/bin
+
+# Download GeckoDriver
+wget -O /tmp/geckodriver.tar.gz "$GECKODRIVER_URL"
+
+# Extract and install
+tar -xzf /tmp/geckodriver.tar.gz -C /tmp/
+chmod +x /tmp/geckodriver
+mv /tmp/geckodriver /usr/local/bin/
+
+# Clean up
+rm /tmp/geckodriver.tar.gz
+
+# Set Firefox binary path
+export FIREFOX_BIN=/usr/bin/firefox-esr
 
 # Install Python dependencies
 echo "Installing Python dependencies..."
@@ -51,9 +49,7 @@ mkdir -p /app/output
 mkdir -p /app/logs
 
 # Verify installations
-echo "Verifying installations..."
+echo "✅ Setup completed successfully!"
+echo "Firefox path: $(which firefox-esr)"
+echo "GeckoDriver path: $(which geckodriver)"
 echo "Python version: $(python3 --version)"
-echo "Firefox version: $(firefox --version 2>/dev/null || echo 'Firefox not found')"
-echo "Geckodriver version: $(geckodriver --version 2>/dev/null || echo 'Geckodriver not found')"
-
-echo "Railway setup completed successfully!"
