@@ -194,43 +194,62 @@ class CAGRScraperFirefox:
             
             logger.info(f"Found years for {ticker}: {unique_years}")
             
-            # Find all value spans
-            value_elements = self.driver.find_elements(
-                By.CSS_SELECTOR,
-                "span.MuiTypography-root.MuiTypography-body1"
-            )
+            # Find the CAGR table with percentage values
+            # Look for table rows that contain percentage values
+            table_rows = self.driver.find_elements(By.CSS_SELECTOR, "tr")
             
-            values = [elem.text.strip() for elem in value_elements if elem.text.strip()]
+            cagr_data = {}
             
-            if not values:
-                logger.warning(f"No values found for {ticker}")
+            # Look for the row with percentage values
+            for row in table_rows:
+                cells = row.find_elements(By.CSS_SELECTOR, "td")
+                if len(cells) >= len(unique_years):
+                    # Check if this row contains percentage values
+                    row_text = " ".join([cell.text.strip() for cell in cells])
+                    if '%' in row_text:
+                        logger.info(f"Found row with percentages: {row_text}")
+                        
+                        # Extract values for each year
+                        for i, year in enumerate(unique_years):
+                            if i < len(cells):
+                                value = cells[i].text.strip()
+                                if value and value != '':
+                                    cagr_data[year] = value
+                                else:
+                                    cagr_data[year] = 'N/A'
+                            else:
+                                cagr_data[year] = 'N/A'
+                        break
+            
+            # If no percentage row found, try alternative approach
+            if not cagr_data:
+                logger.info("No percentage row found, trying alternative approach...")
+                
+                # Look for spans with percentage values
+                percentage_spans = self.driver.find_elements(
+                    By.XPATH, 
+                    "//span[contains(text(), '%')]"
+                )
+                
+                if percentage_spans:
+                    logger.info(f"Found {len(percentage_spans)} percentage spans")
+                    
+                    # Try to map them to years
+                    for i, year in enumerate(unique_years):
+                        if i < len(percentage_spans):
+                            cagr_data[year] = percentage_spans[i].text.strip()
+                        else:
+                            cagr_data[year] = 'N/A'
+            
+            if not cagr_data:
+                logger.warning(f"No CAGR data found for {ticker}")
                 return self._empty_result(ticker)
             
-            # Find the "Avg" row (usually the second row of values)
-            avg_values = {}
-            values_per_row = len(unique_years)
-            
-            # Look for the middle row (Avg) - typically at index values_per_row
-            if len(values) >= values_per_row * 2:
-                avg_start_idx = values_per_row  # Second row
-                for i, year in enumerate(unique_years):
-                    if avg_start_idx + i < len(values):
-                        avg_values[year] = values[avg_start_idx + i]
-                    else:
-                        avg_values[year] = 'N/A'
-            else:
-                # Fallback: use first available values
-                for i, year in enumerate(unique_years):
-                    if i < len(values):
-                        avg_values[year] = values[i]
-                    else:
-                        avg_values[year] = 'N/A'
-            
-            logger.info(f"Scraped data for {ticker}: {avg_values}")
+            logger.info(f"Scraped CAGR data for {ticker}: {cagr_data}")
             
             return {
                 'ticker': ticker,
-                'data': avg_values,
+                'data': cagr_data,
                 'scraped_at': datetime.now().isoformat(),
                 'success': True
             }
