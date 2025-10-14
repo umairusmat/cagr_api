@@ -24,17 +24,7 @@ def main_startup():
     else:
         logger.info("No Railway PORT detected, using default 8000")
     
-    # Start virtual display for Firefox
-    try:
-        import subprocess
-        logger.info("Starting virtual display for Firefox...")
-        subprocess.Popen(['Xvfb', ':99', '-screen', '0', '1024x768x24'], 
-                        stdout=subprocess.DEVNULL, 
-                        stderr=subprocess.DEVNULL)
-        logger.info("Virtual display started successfully")
-    except Exception as e:
-        logger.warning(f"Could not start virtual display: {e}")
-        logger.info("Continuing without virtual display...")
+    # Firefox-ESR runs headless without virtual display
     
     # Start the main application
     try:

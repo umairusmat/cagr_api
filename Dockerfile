@@ -11,24 +11,18 @@ ENV PYTHONUNBUFFERED=1
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
-    firefox \
     wget \
     tar \
     libxml2-dev \
     libxslt1-dev \
-    libgtk-3-0 \
-    libdbus-glib-1-2 \
-    libxt6 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    libasound2 \
-    libpangocairo-1.0-0 \
-    libatk1.0-0 \
-    libcairo-gobject2 \
-    libgdk-pixbuf2.0-0 \
-    xvfb \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Firefox-ESR from Mozilla repository
+RUN wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O- | apt-key add - && \
+    echo "deb https://packages.mozilla.org/apt/ubuntu jammy main" > /etc/apt/sources.list.d/mozilla.list && \
+    apt-get update && \
+    apt-get install -y firefox-esr && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install GeckoDriver
 RUN GECKODRIVER_VERSION="0.34.0" && \
@@ -52,9 +46,8 @@ COPY . .
 RUN mkdir -p /app/input /app/output /app/logs
 
 # Set environment variables
-ENV FIREFOX_BINARY_PATH=/usr/bin/firefox
+ENV FIREFOX_BINARY_PATH=/usr/bin/firefox-esr
 ENV GECKODRIVER_PATH=/usr/local/bin/geckodriver
-ENV DISPLAY=:99
 
 # Expose port
 EXPOSE 8080
