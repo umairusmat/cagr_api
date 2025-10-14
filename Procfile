@@ -1,1 +1,1 @@
-web: python3 working_app.py
+web: python3 minimal_health.py
