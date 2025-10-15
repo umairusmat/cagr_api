@@ -1,6 +1,6 @@
 {
   "scraping": {
-    "frequency_hours": 3,
+    "frequency_hours": 1,
     "enabled": true,
     "headless": true
   },
