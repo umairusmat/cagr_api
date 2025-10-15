@@ -348,7 +348,7 @@ async def update_ticker_schedule(ticker: str, request: TickerUpdateRequest, toke
 # Manual scraping endpoint
 @app.post("/scrape/manual")
 async def manual_scrape(request: ManualScrapeRequest, token: str = Depends(verify_token)):
-    """Trigger manual scrape for specific tickers"""
+    """Trigger manual scrape for specific tickers (on-demand, no permanent storage)"""
     try:
         logger.info(f"Manual scrape requested for tickers: {request.tickers}")
         
@@ -359,12 +359,22 @@ async def manual_scrape(request: ManualScrapeRequest, token: str = Depends(verif
             # Scrape the requested tickers
             results = scraper.scrape_multiple(request.tickers)
             
-            # Save to database
+            # Save to database (temporary storage for this request)
             successful = db.save_scraped_data(results)
             
             if request.wait_for_completion:
                 # Wait a bit for database operations to complete
                 await asyncio.sleep(2)
+            
+            # Get the scraped data to return
+            scraped_data = []
+            for result in results:
+                if result.get('success', False):
+                    scraped_data.append({
+                        'ticker': result['ticker'],
+                        'data': result['data'],
+                        'last_updated': datetime.now().isoformat()
+                    })
             
             return {
                 "success": True,
@@ -372,6 +382,7 @@ async def manual_scrape(request: ManualScrapeRequest, token: str = Depends(verif
                 "requested_tickers": request.tickers,
                 "successful_count": successful,
                 "failed_count": len(request.tickers) - successful,
+                "scraped_data": scraped_data,
                 "timestamp": datetime.now().isoformat()
             }
             

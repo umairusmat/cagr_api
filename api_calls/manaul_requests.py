@@ -185,9 +185,9 @@ class ManualCAGRScraper:
             return False
     
     def manual_scrape_enhanced(self, tickers: List[str], wait_for_completion: bool = True):
-        """Trigger enhanced manual scrape for specific tickers"""
+        """Trigger enhanced manual scrape for specific tickers (on-demand)"""
         try:
-            print(f"Triggering Enhanced API manual scrape for: {', '.join(tickers)}")
+            print(f"Triggering on-demand manual scrape for: {', '.join(tickers)}")
             response = requests.post(
                 f"{self.base_url}/scrape/manual",
                 headers=self.headers,
@@ -205,13 +205,19 @@ class ManualCAGRScraper:
                 print(f"Requested: {len(data['requested_tickers'])} tickers")
                 print(f"Successful: {data['successful_count']}")
                 print(f"Failed: {data['failed_count']}")
+                
+                # Store scraped data for later use
+                if 'scraped_data' in data:
+                    self.last_scraped_data = data['scraped_data']
+                    print(f"Scraped data received for {len(data['scraped_data'])} tickers")
+                
                 return True
             else:
-                print("ERROR: Enhanced manual scrape failed")
+                print("ERROR: Manual scrape failed")
                 return False
                 
         except Exception as e:
-            print(f"ERROR: Enhanced manual scrape failed: {e}")
+            print(f"ERROR: Manual scrape failed: {e}")
             return False
     
     def get_all_tickers(self):
@@ -238,8 +244,8 @@ class ManualCAGRScraper:
             return None
     
     def scrape_specific_tickers(self, tickers: List[str], output_file: str = "manual_cagr.csv"):
-        """Scrape specific tickers using Enhanced API and save to CSV"""
-        print(f"Enhanced API Scraping for: {', '.join(tickers)}")
+        """Scrape specific tickers using Enhanced API (on-demand, no permanent storage)"""
+        print(f"On-Demand Manual Scraping for: {', '.join(tickers)}")
         print("=" * 50)
         
         # Check API health first
@@ -249,41 +255,23 @@ class ManualCAGRScraper:
         
         print("\n" + "=" * 50)
         
-        # Add tickers to the Enhanced API system
-        print("Adding tickers to Enhanced API system...")
-        if not self.add_tickers(tickers, is_scheduled=False, group_name="manual_request"):
-            print("ERROR: Failed to add tickers to Enhanced API")
-            return False
-        
-        print("\n" + "=" * 50)
-        
-        # Trigger enhanced manual scrape
-        print("Triggering Enhanced API manual scrape...")
+        # Trigger manual scrape (no need to add tickers to system)
+        print("Triggering on-demand manual scrape...")
         if not self.manual_scrape_enhanced(tickers, wait_for_completion=True):
-            print("ERROR: Enhanced manual scrape failed")
+            print("ERROR: Manual scrape failed")
             return False
         
         print("\n" + "=" * 50)
         
-        # Get scraped data
-        print("Fetching scraped data...")
-        all_data = self.get_current_data()
+        # Get scraped data from the API response (not from database)
+        print("Processing scraped data...")
         
-        if not all_data:
-            print("ERROR: No data available after scraping")
-            return False
-        
-        # Filter for requested tickers
-        filtered_data = []
-        for ticker_data in all_data:
-            if ticker_data['ticker'] in tickers:
-                filtered_data.append(ticker_data)
-        
-        if not filtered_data:
-            print(f"WARNING: No data found for requested tickers: {', '.join(tickers)}")
-            print("Available tickers:")
-            for ticker_data in all_data:
-                print(f"  - {ticker_data['ticker']}")
+        # Use the scraped data from the API response
+        if hasattr(self, 'last_scraped_data') and self.last_scraped_data:
+            filtered_data = self.last_scraped_data
+            print(f"Using scraped data from API response: {len(filtered_data)} tickers")
+        else:
+            print("WARNING: No scraped data available from API response")
             return False
         
         # Convert to wide format for CSV
