@@ -512,7 +512,17 @@ def load_tickers(file_path: str = "input/tickers.csv") -> List[str]:
     """Load tickers from CSV file"""
     try:
         df = pd.read_csv(file_path)
-        tickers = df['Ticker'].tolist()
+        # Handle both 'Ticker' and 'ticker' column names
+        if 'Ticker' in df.columns:
+            tickers = df['Ticker'].tolist()
+        elif 'ticker' in df.columns:
+            tickers = df['ticker'].tolist()
+        else:
+            logger.error(f"No 'Ticker' or 'ticker' column found in {file_path}")
+            return []
+        
+        # Filter out empty values
+        tickers = [ticker.strip() for ticker in tickers if ticker and str(ticker).strip()]
         logger.info(f"Loaded {len(tickers)} tickers from {file_path}")
         return tickers
     except Exception as e:

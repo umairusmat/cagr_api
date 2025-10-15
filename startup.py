@@ -5,7 +5,8 @@ Railway startup script with proper port handling
 import os
 import sys
 import logging
-from working_app import main
+from enhanced_api import app
+import uvicorn
 
 # Configure logging
 logging.basicConfig(
@@ -36,11 +37,16 @@ def main_startup():
         logger.warning(f"Could not start virtual display: {e}")
         logger.info("Continuing without virtual display...")
     
-    # Start the main application
+    # Start the enhanced API application
     try:
-        main()
+        # Get port from Railway environment
+        port = int(os.environ.get('PORT', 8000))
+        logger.info(f"Starting Enhanced CAGR API on port {port}")
+        
+        # Run the enhanced API
+        uvicorn.run(app, host="0.0.0.0", port=port)
     except Exception as e:
-        logger.error(f"Failed to start application: {e}")
+        logger.error(f"Failed to start enhanced API: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
