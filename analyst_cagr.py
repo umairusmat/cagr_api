@@ -555,7 +555,7 @@ def main():
         
         # Read tickers from CSV file
         try:
-            df = pd.read_csv('tickers.csv')
+            df = pd.read_csv('./input/tickers.csv')
             tickers = df['Ticker'].tolist()
             print(f"Found {len(tickers)} tickers in tickers.csv")
         except Exception as e:

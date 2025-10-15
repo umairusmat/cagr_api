@@ -11,6 +11,7 @@ from datetime import datetime
 import json
 
 from cagr_scraper_firefox import CAGRScraperFirefox, CAGRDatabase, load_tickers
+from scheduler_fixed import start_scheduler, stop_scheduler, trigger_manual_scrape
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -77,8 +78,26 @@ async def lifespan(app: FastAPI):
         logger.error(f"Error in initial scrape: {e}")
         logger.info("Continuing without initial scrape...")
     
+    # Start background scheduler for automatic scraping
+    try:
+        logger.info("Starting background scheduler...")
+        await start_scheduler()
+        logger.info("Background scheduler started successfully")
+    except Exception as e:
+        logger.error(f"Error starting scheduler: {e}")
+        logger.info("Continuing without background scheduler...")
+    
     logger.info("CAGR API ready to serve data")
     yield
+    
+    # Cleanup on shutdown
+    try:
+        logger.info("Stopping background scheduler...")
+        await stop_scheduler()
+        logger.info("Background scheduler stopped")
+    except Exception as e:
+        logger.error(f"Error stopping scheduler: {e}")
+    
     logger.info("CAGR API application stopped")
 
 app = FastAPI(
@@ -262,42 +281,14 @@ async def run_manual_scrape(auth_token: str = Depends(verify_token)):
     try:
         logger.info("Starting manual scrape...")
         
-        # Load tickers
-        tickers = load_tickers()
-        if not tickers:
-            return JSONResponse(
-                status_code=400,
-                content={
-                    "success": False,
-                    "message": "No tickers found",
-                    "timestamp": datetime.now().isoformat()
-                }
-            )
+        # Use the scheduler for manual scrape
+        await trigger_manual_scrape()
         
-        # Initialize scraper
-        scraper = CAGRScraperFirefox(headless=True)
-        
-        try:
-            # Scrape data
-            results = scraper.scrape_multiple(tickers)
-            
-            # Save to database
-            successful = db.save_scraped_data(results)
-            
-            return {
-                "success": True,
-                "message": f"Manual scrape completed: {successful} successful",
-                "results": {
-                    "total_tickers": len(tickers),
-                    "successful": successful,
-                    "failed": len(tickers) - successful
-                },
-                "timestamp": datetime.now().isoformat()
-            }
-            
-        finally:
-            # Clean up scraper
-            scraper.close()
+        return {
+            "success": True,
+            "message": "Manual scrape triggered successfully",
+            "timestamp": datetime.now().isoformat()
+        }
             
     except Exception as e:
         logger.error(f"Error in manual scrape: {e}")

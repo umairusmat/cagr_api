@@ -89,20 +89,21 @@ class CAGRAPIClient:
         data = data_response['data']
         print(f"SUCCESS: Fetched data for {len(data)} tickers")
         
-        # Convert to DataFrame
+        # Convert to wide format where each ticker is a row and years are columns
         rows = []
         for ticker_data in data:
             ticker = ticker_data['ticker']
             ticker_info = ticker_data['data']
             last_updated = ticker_data['last_updated']
             
+            # Create a row for this ticker
+            row = {'Ticker': ticker, 'Last_Updated': last_updated}
+            
+            # Add each year as a column
             for year, value in ticker_info.items():
-                rows.append({
-                    'Ticker': ticker,
-                    'Year': year,
-                    'CAGR_Value': value,
-                    'Last_Updated': last_updated
-                })
+                row[year] = value
+            
+            rows.append(row)
         
         df = pd.DataFrame(rows)
         
@@ -121,9 +122,13 @@ class CAGRAPIClient:
         # Save to CSV
         df.to_csv(filename, index=False)
         print(f"SUCCESS: Data exported to: {filename}")
-        print(f"Total records: {len(df)}")
-        print(f"Unique tickers: {df['Ticker'].nunique()}")
-        print(f"Year range: {df['Year'].min()} - {df['Year'].max()}")
+        print(f"Total tickers: {len(df)}")
+        print(f"Columns: {list(df.columns)}")
+        
+        # Show year columns (excluding Ticker and Last_Updated)
+        year_columns = [col for col in df.columns if col not in ['Ticker', 'Last_Updated']]
+        if year_columns:
+            print(f"Year range: {min(year_columns)} - {max(year_columns)}")
         
         return True
 
@@ -147,10 +152,12 @@ def main():
             import glob
             csv_files = glob.glob("api_calls/cagr_data_*.csv")
             if csv_files:
-                df = pd.read_csv(csv_files[0])
-                print(df.head(10).to_string(index=False))
-        except:
-            print("Could not display sample data")
+                # Get the most recent CSV file
+                latest_file = max(csv_files, key=os.path.getctime)
+                df = pd.read_csv(latest_file)
+                print(df.to_string(index=False))
+        except Exception as e:
+            print(f"Could not display sample data: {e}")
     else:
         print("\nERROR: Failed to export data")
 
