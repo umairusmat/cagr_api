@@ -200,26 +200,87 @@ class CAGRScraperFirefox:
             
             cagr_data = {}
             
-            # Look for the row with percentage values
+            # Look for the "Avg" row specifically (not High or Low)
+            # The table typically has rows: Low, Avg, High
+            # We want the Avg row (middle row)
+            all_percentage_rows = []
+            
             for row in table_rows:
                 cells = row.find_elements(By.CSS_SELECTOR, "td")
                 if len(cells) >= len(unique_years):
                     # Check if this row contains percentage values
                     row_text = " ".join([cell.text.strip() for cell in cells])
                     if '%' in row_text:
-                        logger.info(f"Found row with percentages: {row_text}")
-                        
-                        # Extract values for each year
-                        for i, year in enumerate(unique_years):
-                            if i < len(cells):
-                                value = cells[i].text.strip()
-                                if value and value != '':
-                                    cagr_data[year] = value
-                                else:
-                                    cagr_data[year] = 'N/A'
+                        all_percentage_rows.append({
+                            'row': row,
+                            'cells': cells,
+                            'text': row_text
+                        })
+                        logger.info(f"Found percentage row: {row_text}")
+            
+            # Now find the "Avg" row specifically
+            # Look for the row that contains "Avg" in the first cell or nearby
+            avg_row_found = False
+            
+            for row_data in all_percentage_rows:
+                # Check if this is the Avg row by looking at the row context
+                # The Avg row is typically the middle row between Low and High
+                row_cells = row_data['cells']
+                
+                # Check if this row has "Avg" indicator or is the middle row
+                row_context = " ".join([cell.text.strip() for cell in row_cells[:3]])  # First few cells
+                
+                # If we have multiple rows, look for the Avg row specifically
+                if len(all_percentage_rows) >= 3:
+                    # We have Low, Avg, High rows - take the second row (index 1)
+                    if all_percentage_rows.index(row_data) == 1:
+                        logger.info(f"Selected second row as Avg: {row_data['text']}")
+                        avg_row_found = True
+                        cells = row_cells
+                        break
+                elif len(all_percentage_rows) == 2:
+                    # If only 2 rows, take the second one (usually Avg)
+                    if all_percentage_rows.index(row_data) == 1:
+                        logger.info(f"Selected second row as Avg: {row_data['text']}")
+                        avg_row_found = True
+                        cells = row_cells
+                        break
+                elif len(all_percentage_rows) == 1:
+                    # Only one row, use it
+                    logger.info(f"Only one row found, using it: {row_data['text']}")
+                    avg_row_found = True
+                    cells = row_cells
+                    break
+            
+            if avg_row_found:
+                # Extract values for each year from the Avg row
+                for i, year in enumerate(unique_years):
+                    if i < len(cells):
+                        value = cells[i].text.strip()
+                        if value and value != '':
+                            cagr_data[year] = value
+                        else:
+                            cagr_data[year] = 'N/A'
+                    else:
+                        cagr_data[year] = 'N/A'
+                logger.info(f"Extracted Avg row data: {cagr_data}")
+            else:
+                # Fallback: if we can't identify Avg row, take the middle row
+                if all_percentage_rows:
+                    middle_index = len(all_percentage_rows) // 2
+                    fallback_row = all_percentage_rows[middle_index]
+                    cells = fallback_row['cells']
+                    logger.info(f"Using fallback middle row: {fallback_row['text']}")
+                    
+                    for i, year in enumerate(unique_years):
+                        if i < len(cells):
+                            value = cells[i].text.strip()
+                            if value and value != '':
+                                cagr_data[year] = value
                             else:
                                 cagr_data[year] = 'N/A'
-                        break
+                        else:
+                            cagr_data[year] = 'N/A'
             
             # If no percentage row found, try alternative approach
             if not cagr_data:
