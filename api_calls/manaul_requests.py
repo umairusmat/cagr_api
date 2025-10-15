@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import List, Dict, Any
 
 class ManualCAGRScraper:
-    """Client for manual CAGR scraping on Railway"""
+    """Client for manual CAGR scraping on Railway with Enhanced API support"""
     
     def __init__(self, base_url="https://cagrapi-production.up.railway.app", auth_token="mysecretapitoken123"):
         self.base_url = base_url
@@ -19,15 +19,23 @@ class ManualCAGRScraper:
         self.headers = {"X-Auth-Token": auth_token}
     
     def check_api_health(self):
-        """Check if API is healthy"""
+        """Check if Enhanced API is healthy"""
         try:
             response = requests.get(f"{self.base_url}/health", timeout=10)
             response.raise_for_status()
             health = response.json()
             print(f"SUCCESS: API Status: {health['status']}")
+            print(f"Version: {health.get('version', 'Unknown')}")
             print(f"Data Available: {health['data']['available']}")
             print(f"Total Tickers: {health['data']['total_tickers']}")
             print(f"Last Scrape: {health['data']['last_scrape']}")
+            
+            # Show enhanced API features
+            if 'ticker_management' in health:
+                ticker_mgmt = health['ticker_management']
+                print(f"Scheduled Tickers: {ticker_mgmt.get('scheduled_tickers', 0)}")
+                print(f"Total Managed Tickers: {ticker_mgmt.get('total_tickers', 0)}")
+            
             return True
         except Exception as e:
             print(f"ERROR: API Health Check Failed: {e}")
@@ -145,27 +153,125 @@ class ManualCAGRScraper:
         print("TIMEOUT: Timeout reached, scrape may still be running")
         return False
     
+    def add_tickers(self, tickers: List[str], is_scheduled: bool = False, group_name: str = "manual"):
+        """Add new tickers to the Enhanced API system"""
+        try:
+            print(f"Adding tickers to Enhanced API: {', '.join(tickers)}")
+            response = requests.post(
+                f"{self.base_url}/tickers/manage/batch",
+                headers=self.headers,
+                json={
+                    "tickers": tickers,
+                    "is_scheduled": is_scheduled,
+                    "group_name": group_name
+                },
+                timeout=30
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+            if data['success']:
+                print(f"SUCCESS: {data['message']}")
+                for result in data['results']:
+                    status = "SUCCESS" if result['success'] else "FAILED"
+                    print(f"  {result['ticker']}: {status}")
+                return True
+            else:
+                print("ERROR: Failed to add tickers")
+                return False
+                
+        except Exception as e:
+            print(f"ERROR: Error adding tickers: {e}")
+            return False
+    
+    def manual_scrape_enhanced(self, tickers: List[str], wait_for_completion: bool = True):
+        """Trigger enhanced manual scrape for specific tickers"""
+        try:
+            print(f"Triggering Enhanced API manual scrape for: {', '.join(tickers)}")
+            response = requests.post(
+                f"{self.base_url}/scrape/manual",
+                headers=self.headers,
+                json={
+                    "tickers": tickers,
+                    "wait_for_completion": wait_for_completion
+                },
+                timeout=300  # 5 minutes timeout for scraping
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+            if data['success']:
+                print(f"SUCCESS: {data['message']}")
+                print(f"Requested: {len(data['requested_tickers'])} tickers")
+                print(f"Successful: {data['successful_count']}")
+                print(f"Failed: {data['failed_count']}")
+                return True
+            else:
+                print("ERROR: Enhanced manual scrape failed")
+                return False
+                
+        except Exception as e:
+            print(f"ERROR: Enhanced manual scrape failed: {e}")
+            return False
+    
+    def get_all_tickers(self):
+        """Get all managed tickers from Enhanced API"""
+        try:
+            print("Fetching all managed tickers from Enhanced API...")
+            response = requests.get(f"{self.base_url}/tickers", headers=self.headers, timeout=30)
+            response.raise_for_status()
+            data = response.json()
+            
+            if data['success']:
+                print(f"SUCCESS: Found {data['total_count']} managed tickers")
+                for ticker_info in data['tickers']:
+                    status = "Scheduled" if ticker_info['is_scheduled'] else "Manual"
+                    groups = ", ".join(ticker_info['groups'])
+                    print(f"  {ticker_info['ticker']}: {status} (Groups: {groups})")
+                return data['tickers']
+            else:
+                print("ERROR: Failed to fetch tickers")
+                return None
+                
+        except Exception as e:
+            print(f"ERROR: Error fetching tickers: {e}")
+            return None
+    
     def scrape_specific_tickers(self, tickers: List[str], output_file: str = "manual_cagr.csv"):
-        """Scrape specific tickers and save to CSV"""
-        print(f"Requesting tickers: {', '.join(tickers)}")
+        """Scrape specific tickers using Enhanced API and save to CSV"""
+        print(f"Enhanced API Scraping for: {', '.join(tickers)}")
         print("=" * 50)
         
         # Check API health first
         if not self.check_api_health():
-            print("ERROR: API is not healthy, cannot proceed")
+            print("ERROR: Enhanced API is not healthy, cannot proceed")
             return False
         
-        # Get current data (no manual scrape needed for existing data)
-        print("Fetching current data...")
+        print("\n" + "=" * 50)
+        
+        # Add tickers to the Enhanced API system
+        print("Adding tickers to Enhanced API system...")
+        if not self.add_tickers(tickers, is_scheduled=False, group_name="manual_request"):
+            print("ERROR: Failed to add tickers to Enhanced API")
+            return False
+        
+        print("\n" + "=" * 50)
+        
+        # Trigger enhanced manual scrape
+        print("Triggering Enhanced API manual scrape...")
+        if not self.manual_scrape_enhanced(tickers, wait_for_completion=True):
+            print("ERROR: Enhanced manual scrape failed")
+            return False
+        
+        print("\n" + "=" * 50)
+        
+        # Get scraped data
+        print("Fetching scraped data...")
         all_data = self.get_current_data()
         
         if not all_data:
-            print("ERROR: No data available")
+            print("ERROR: No data available after scraping")
             return False
-        
-        # Show available tickers
-        available_tickers = [ticker_data['ticker'] for ticker_data in all_data]
-        print(f"Available tickers: {', '.join(available_tickers)}")
         
         # Filter for requested tickers
         filtered_data = []
@@ -178,10 +284,6 @@ class ManualCAGRScraper:
             print("Available tickers:")
             for ticker_data in all_data:
                 print(f"  - {ticker_data['ticker']}")
-            print("\nNOTE: To scrape new tickers (AAPL, MSFT, TSLA, META), you need to:")
-            print("1. Update input/tickers.csv on Railway with the new tickers")
-            print("2. Redeploy the application")
-            print("3. Wait for automatic scraping or trigger manual scrape")
             return False
         
         # Convert to wide format for CSV
@@ -307,8 +409,8 @@ def check_data_freshness():
     scraper.get_data_freshness()
 
 def scrape_custom_tickers():
-    """Scrape specific tickers and save to CSV"""
-    print("Custom Ticker Scraping")
+    """Scrape specific tickers using Enhanced API and save to CSV"""
+    print("Enhanced API Custom Ticker Scraping")
     print("=" * 50)
     
     # Define the tickers to scrape
@@ -318,21 +420,31 @@ def scrape_custom_tickers():
     # Initialize scraper
     scraper = ManualCAGRScraper()
     
-    # Scrape specific tickers
+    # Scrape specific tickers using Enhanced API
     success = scraper.scrape_specific_tickers(target_tickers, output_file)
     
     if success:
-        print(f"\nSUCCESS: Scraping completed for {', '.join(target_tickers)}")
+        print(f"\nSUCCESS: Enhanced API scraping completed for {', '.join(target_tickers)}")
         print(f"Results saved to: {output_file}")
     else:
         print(f"\nERROR: Failed to scrape tickers: {', '.join(target_tickers)}")
-        print("\nSOLUTION: To scrape new tickers (AAPL, MSFT, TSLA, META):")
-        print("1. The tickers.csv file has been updated locally")
-        print("2. Run: git add input/tickers.csv")
-        print("3. Run: git commit -m 'Update tickers to AAPL, MSFT, TSLA, META'")
-        print("4. Run: git push origin main")
-        print("5. Wait for Railway to redeploy and scrape new tickers")
-        print("6. Then run this script again")
+        print("\nThe Enhanced API should handle this automatically!")
+
+def list_managed_tickers():
+    """List all managed tickers in the Enhanced API"""
+    print("Enhanced API Managed Tickers")
+    print("=" * 50)
+    
+    # Initialize scraper
+    scraper = ManualCAGRScraper()
+    
+    # Check API health
+    if not scraper.check_api_health():
+        print("ERROR: Enhanced API is not healthy, cannot proceed")
+        return
+    
+    # Get all managed tickers
+    scraper.get_all_tickers()
 
 def scrape_available_tickers():
     """Scrape currently available tickers and save to CSV"""
@@ -408,13 +520,21 @@ if __name__ == "__main__":
         elif command == "available":
             # Scrape available tickers: python manaul_requests.py available
             scrape_available_tickers()
+        elif command == "enhanced":
+            # Enhanced API custom scraping: python manaul_requests.py enhanced
+            scrape_custom_tickers()
+        elif command == "list":
+            # List managed tickers: python manaul_requests.py list
+            list_managed_tickers()
         else:
             print("Usage:")
             print("  python manaul_requests.py                    # Full demo")
             print("  python manaul_requests.py ticker MELI        # Test specific ticker")
             print("  python manaul_requests.py freshness          # Check data freshness")
-            print("  python manaul_requests.py custom             # Scrape AAPL, MSFT, TSLA, META")
+            print("  python manaul_requests.py custom             # Scrape AAPL, MSFT, TSLA, META (legacy)")
+            print("  python manaul_requests.py enhanced          # Enhanced API scraping for AAPL, MSFT, TSLA, META")
             print("  python manaul_requests.py available         # Scrape currently available tickers")
+            print("  python manaul_requests.py list              # List all managed tickers in Enhanced API")
     else:
         # Full demonstration
         main()
